@@ -1,0 +1,28 @@
+{
+    "FrontendPort":5556,
+    "BackendPort":5559,
+    "MqttServer":"tcp://localhost:1883",
+    "MqttClientId":"assets_tracker",
+
+    "MqttConfig": {
+      "KeepAliveTimeout": 5,
+      "PingTimeout": 1,
+      "MaxReconnectInterval": 30,
+      "AutoReconnect":true
+    },
+
+    "ForwardTopics":["testtopic"],
+
+    "LoggerConfig": {
+        "level": "debug",
+        "encoding": "json",
+        "outputPaths": ["stdout", "log.log"],
+        "errorOutputPaths": ["stderr"],
+        "initialFields": {},
+        "encoderConfig": {
+          "messageKey": "message",
+          "levelKey": "level",
+          "levelEncoder": "lowercase"
+        }
+    }
+}
