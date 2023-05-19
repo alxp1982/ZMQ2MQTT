@@ -19,6 +19,5 @@
 
 # Go workspace file
 go.work
-go.sum
 .gitignore
 log.log
