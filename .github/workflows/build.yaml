@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Setup libzmq
+        run: sudo apt-get install libzmq3-dev
 
       - name: Set up Go
         uses: actions/setup-go@v4
