@@ -1,0 +1,39 @@
+name: Go package
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup libzmq
+        run: sudo apt-get install libzmq3-dev
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache-dependency-path: go.sum
+    
+      - name: Build
+        run: go build -v ./...
+        
+      - name: Build docker
+        run: docker build . -f docker/Dockerfile --tag zmq2mqtt
+        
+      - name: Pull eclipse-mosquito image that is required for tests
+        run: docker pull eclipse-mosquitto
+        
+      - name: Test 
+        run: go test -json > TestResults-ZMQ2MQTT.json
+        
+      - name: Upload Go test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: TestResults-ZMQ2MQTT
+          path: TestResults-ZMQ2MQTT.json
