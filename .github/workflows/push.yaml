@@ -23,15 +23,19 @@ jobs:
         
       - name: Build docker
         run: docker build . -f docker/Dockerfile --tag zmq2mqtt
+  test:
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - name: Pull eclipse-mosquito image that is required for tests
+          run: docker pull eclipse-mosquitto
         
-      - name: Pull eclipse-mosquito image that is required for tests
-        run: docker pull eclipse-mosquitto
+        - name: Test 
+          run: go test -json > TestResults-ZMQ2MQTT.json
         
-      - name: Test 
-        run: go test -json > TestResults-ZMQ2MQTT.json
-        
-      - name: Upload Go test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: TestResults-ZMQ2MQTT
-          path: TestResults-ZMQ2MQTT.json
+        - name: Upload Go test results
+          uses: actions/upload-artifact@v3
+          with:
+            name: TestResults-ZMQ2MQTT
+            path: TestResults-ZMQ2MQTT.json      
+    
