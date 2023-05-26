@@ -21,64 +21,29 @@ func forwarder_thread(logger *zap.SugaredLogger, config *Configuration, cancel c
 	logger.Debugln("enter forward_thread")
 	defer logger.Debugln("exit forward_thread")
 
-	pipe, _ := zmq.NewSocket(zmq.PAIR)
-	err := pipe.Bind("inproc://pipe")
-
-	if err != nil {
-		logger.Error(err)
-		//communicate error to main thread
-		return
-	}
+	pipe := setupZeroMQSocket(logger)
 
 	defer pipe.Close()
 
-	//setup mqtt connection
-	opts := mqtt.NewClientOptions().AddBroker(config.MqttServer).SetClientID(config.MqttClientId)
+	client := setupMQTTClient(logger, config)
 
-	opts.SetKeepAlive(time.Duration(config.MqttConfig.KeepAliveTimeout * int(time.Second)))
-	opts.SetPingTimeout(time.Duration(config.MqttConfig.PingTimeout * int(time.Second)))
-	opts.SetMaxReconnectInterval(time.Duration(config.MqttConfig.MaxReconnectInterval * int(time.Second)))
-	opts.AutoReconnect = config.MqttConfig.AutoReconnect
+	defer client.Disconnect(200)
 
-	//MQTT handlers
-	opts.SetConnectionLostHandler(func(c mqtt.Client, err error) {
-		logger.Warnf("!!!!!! mqtt connection lost error: %s\n", err.Error())
-	})
-
-	opts.SetReconnectingHandler(func(c mqtt.Client, options *mqtt.ClientOptions) {
-		logger.Infoln("mqtt reconnecting.....")
-	})
-
-	opts.SetOnConnectHandler(func(c mqtt.Client) {
-		logger.Infoln("mqtt connected.....")
-	})
-
-	c := mqtt.NewClient(opts)
-
-	//try connecting until succesfull
-	for token := c.Connect(); token.Wait() && token.Error() != nil; {
-		logger.Warnf("failed to connect ot MQTT. Error:%v. Retrying in %d sec", token.Error(), 10)
-		time.Sleep(10 * time.Second)
-	}
-
-	defer c.Disconnect(200)
-
-	//setup pooler for pipe socket
 	poller := zmq.NewPoller()
 	poller.Add(pipe, zmq.POLLIN)
 
 	for {
-		//pool for messages
-		if sockets, err := poller.Poll(100 * time.Millisecond); err == nil && len(sockets) > 0 {
-
-			if !c.IsConnected() {
+		switch sockets, err := poller.Poll(100 * time.Millisecond); {
+		case err != nil:
+			logger.Errorln(err)
+		case len(sockets) > 0:
+			if !client.IsConnected() {
 				logger.Warnln("MQTT not connected. Skipping message")
 				continue
 			}
 
 			for _, socket := range sockets {
 				if socket.Events&zmq.POLLIN != 0 {
-					//receive messages from ZMQ with timeout
 					msgs, err := pipe.RecvMessage(0)
 
 					if err != nil {
@@ -98,8 +63,7 @@ func forwarder_thread(logger *zap.SugaredLogger, config *Configuration, cancel c
 								return s == topic
 							}) != -1 {
 								logger.Debugf("Forwarding message %s", payload)
-								//send message to MQTT topic
-								token := c.Publish(topic, 1, false, payload)
+								token := client.Publish(topic, 1, false, payload)
 
 								if token.Error() != nil {
 									logger.Warnln(token.Error().Error())
@@ -111,14 +75,65 @@ func forwarder_thread(logger *zap.SugaredLogger, config *Configuration, cancel c
 			}
 		}
 
-		// exit gorouting when signaled
 		select {
 		case <-cancel:
+			logger.Debugln("cancellation signal received")
 			return
 		default:
 		}
 	}
+}
 
+func setupZeroMQSocket(logger *zap.SugaredLogger) *zmq.Socket {
+	pipe, err := zmq.NewSocket(zmq.PAIR)
+
+	if err != nil {
+		logger.Error(err)
+		//communicate error to main thread
+		return nil
+	}
+
+	err = pipe.Bind("inproc://pipe")
+
+	if err != nil {
+		logger.Error(err)
+		//communicate error to main thread
+		return nil
+	}
+
+	logger.Debugln("ZeroMQ socket setup completed")
+	return pipe
+}
+
+func setupMQTTClient(logger *zap.SugaredLogger, config *Configuration) mqtt.Client {
+	opts := mqtt.NewClientOptions().AddBroker(config.MqttServer).SetClientID(config.MqttClientId)
+
+	opts.SetKeepAlive(time.Duration(config.MqttConfig.KeepAliveTimeout * int(time.Second)))
+	opts.SetPingTimeout(time.Duration(config.MqttConfig.PingTimeout * int(time.Second)))
+	opts.SetMaxReconnectInterval(time.Duration(config.MqttConfig.MaxReconnectInterval * int(time.Second)))
+	opts.AutoReconnect = config.MqttConfig.AutoReconnect
+
+	opts.SetConnectionLostHandler(func(c mqtt.Client, err error) {
+		logger.Warnf("!!!!!! mqtt connection lost error: %s\n", err.Error())
+	})
+
+	opts.SetReconnectingHandler(func(c mqtt.Client, options *mqtt.ClientOptions) {
+		logger.Infoln("mqtt reconnecting.....")
+	})
+
+	opts.SetOnConnectHandler(func(c mqtt.Client) {
+		logger.Infoln("mqtt connected.....")
+	})
+
+	client := mqtt.NewClient(opts)
+
+	for token := client.Connect(); token.Wait() && token.Error() != nil; {
+		logger.Warnf("failed to connect to MQTT. Error:%v. Retrying in %d sec", token.Error(), 10)
+		time.Sleep(10 * time.Second)
+	}
+
+	logger.Debugln("MQTT client setup completed")
+	return client
 }
 
 func main() {
