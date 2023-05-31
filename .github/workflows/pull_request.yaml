@@ -13,6 +13,4 @@ jobs:
       - uses: mshick/add-pr-comment@v2
         with:
           message: |
-            **Hello**
-            🌏
-            !
+            <span style="color:red">**Cloud cost would :small_red_triangle: increase by $23.56 per month if this PR is merged.**</span>
