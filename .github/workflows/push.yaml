@@ -48,6 +48,11 @@ jobs:
           run: |
             echo $GOPATH/bin >> $GITHUB_PATH
         
+        - name: Display Path
+          shell: bash
+          run: |
+            echo $GITHUB_PATH
+        
         - name: Test 
           run: go test -json | go-test-report
         
