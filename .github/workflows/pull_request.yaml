@@ -10,7 +10,8 @@ jobs:
     permissions: 
       pull-requests: write 
     steps:
-      - uses: mshick/add-pr-comment@v2
-        with:
-          message: |
-            <span style="color:red">**Cloud cost would :small_red_triangle: increase by $23.56 per month if this PR is merged.**</span>
+      - name: Go Coverage Diff Action
+      # You may pin to the exact commit or the version.
+      # uses: PanagiotisPtr/cov-diff@b98299bcbfb64ad95cd768a5ccafd15a00c72244
+        uses: PanagiotisPtr/cov-diff@v1
+            
