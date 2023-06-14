@@ -39,13 +39,16 @@ jobs:
             cache-dependency-path: go.sum
         - name: Pull eclipse-mosquito image that is required for tests
           run: docker pull eclipse-mosquitto
+          
+        - name: Install test report HTML formatter
+          run: go get -u github.com/vakenbolt/go-test-report/
         
         - name: Test 
-          run: go test -json > TestResults-ZMQ2MQTT.json
+          run: go test -json | go-test-report
         
         - name: Upload Go test results
           uses: actions/upload-artifact@v3
           with:
-            name: TestResults-ZMQ2MQTT
-            path: TestResults-ZMQ2MQTT.json      
+            name: test_report.html
+            path: test_report.html     
     
