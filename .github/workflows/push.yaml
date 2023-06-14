@@ -43,15 +43,15 @@ jobs:
         - name: Install test report HTML formatter
           run: go get -u github.com/vakenbolt/go-test-report/
           
+        - name: Display Gopath
+          shell: bash
+          run: |
+            echo $GOPATH
+            
         - name: Add to PATH
           shell: bash
           run: |
             echo $GOPATH/bin >> $GITHUB_PATH
-        
-        - name: Display Path
-          shell: bash
-          run: |
-            echo $PATH
         
         - name: Test 
           run: go test -json | go-test-report
