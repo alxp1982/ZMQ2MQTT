@@ -1,5 +1,8 @@
 name: zmq2mqtt core ci
 
+env:
+  GOPATH: ${{ github.workspace }}
+  
 on: [push]
 
 jobs:
