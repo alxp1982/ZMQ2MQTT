@@ -5,12 +5,18 @@ env:
   
 on: [push]
 
+defaults:
+  run:
+    working-directory: ${{ env.GOPATH }}/src/zmq2mqtt
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          path: ${{ env.GOPATH }}/src/zmq2mqtt
       
       - name: Setup libzmq
         run: sudo apt-get install libzmq3-dev
@@ -31,6 +37,8 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v3
+          with:
+            path: ${{ env.GOPATH }}/src/zmq2mqtt
       
         - name: Setup libzmq
           run: sudo apt-get install libzmq3-dev
