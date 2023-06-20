@@ -1,13 +1,6 @@
 name: zmq2mqtt core ci
-
-env:
-  GOPATH: ${{ github.workspace }}
   
 on: [push]
-
-defaults:
-  run:
-    working-directory: ${{ env.GOPATH }}/src/zmq2mqtt
 
 jobs:
   build:
@@ -15,8 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          path: ${{ env.GOPATH }}/src/zmq2mqtt
       
       - name: Setup libzmq
         run: sudo apt-get install libzmq3-dev
@@ -35,7 +26,13 @@ jobs:
   test:
       needs: build
       runs-on: ubuntu-latest
-      steps:
+      env:
+          GOPATH: ${{ github.workspace }}
+      defaults:
+          run:
+            working-directory: ${{ env.GOPATH }}/src/zmq2mqtt
+            
+      steps:    
         - uses: actions/checkout@v3
           with:
             path: ${{ env.GOPATH }}/src/zmq2mqtt
