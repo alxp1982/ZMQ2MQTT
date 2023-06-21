@@ -36,7 +36,7 @@ jobs:
         - name: Test 
           run: |
             set -euo pipefail
-            go test -json -v ./... 2>&1 | tee /tmp/zmq2mqtttest.log -coverprofile=coverage.out | gotestfmt
+            go test -json -v ./... 2>&1 -coverprofile=coverage.out | tee /tmp/zmq2mqtttest.log | gotestfmt
 
         - name: generate diff
           run: |
