@@ -1,4 +1,4 @@
-name: Go package
+name: zmq2mqtt pull request
 
 on:
   pull_request:
@@ -6,34 +6,63 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    permissions: 
+      pull-requests: write 
     steps:
-      - uses: actions/checkout@v3
+        - uses: actions/checkout@v3
+          with:
+            fetch-depth: 0
       
-      - name: Setup libzmq
-        run: sudo apt-get install libzmq3-dev
+        - name: Setup libzmq
+          run: sudo apt-get install libzmq3-dev
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.20'
-          cache-dependency-path: go.sum
+        - name: Set up Go
+          uses: actions/setup-go@v4
+          with:
+            go-version: '1.20'
+            cache-dependency-path: go.sum
+            
+        - name: Pull eclipse-mosquito image that is required for tests
+          run: docker pull eclipse-mosquitto
+          
+        # Install gotestfmt on the VM running the action.
+        - name: Set up gotestfmt
+          uses: gotesttools/gotestfmt-action@v2
+          with:
+            # Optional: pass GITHUB_TOKEN to avoid rate limiting.
+            token: ${{ secrets.GITHUB_TOKEN }}
+        
+        - name: Test 
+          run: |
+            set -euo pipefail
+            go test -json -v ./... 2>&1 -coverprofile=coverage.out | tee /tmp/zmq2mqtttest.log | gotestfmt
+
+        - name: generate diff
+          run: |
+              git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > pr.diff
+              
+        - name: compute new code coverage
+          id: covdiffaction
+          uses: panagiotisptr/cov-diff@main
+          with:
+            path: .
+            coverprofile: coverage.out
+            diff: pr.diff
+            module: github.com/panagiotisptr/cov-diff
     
-      - name: Build
-        run: go build -v ./...
+        - name: Comment
+          uses: mshick/add-pr-comment@v2
+          with:
+            message: |
+              Coverage on new code: ${{ steps.covdiffaction.outputs.covdiff }}%
         
-      - name: Build docker
-        run: docker build . -f docker/Dockerfile --tag zmq2mqtt
-        
-      - name: Pull eclipse-mosquito image that is required for tests
-        run: docker pull eclipse-mosquitto
-        
-      - name: Test 
-        run: go test -json > TestResults-ZMQ2MQTT.json
-        
-      - name: Upload Go test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: TestResults-ZMQ2MQTT
-          path: TestResults-ZMQ2MQTT.json
+        # Upload the original go test log as an artifact for later review.
+        - name: Upload test log
+          uses: actions/upload-artifact@v2
+          if: always()
+          with:
+            name: zmq2mqtttest-log
+            path: /tmp/zmq2mqtttest.log
+            if-no-files-found: error    
+    

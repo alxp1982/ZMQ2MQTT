@@ -1,5 +1,5 @@
-name: Go package
-
+name: zmq2mqtt core ci
+  
 on: [push]
 
 jobs:
@@ -26,8 +26,16 @@ jobs:
   test:
       needs: build
       runs-on: ubuntu-latest
-      steps:
+      env:
+          GOPATH: ${{ github.workspace }}
+      defaults:
+          run:
+            working-directory: ${{ env.GOPATH }}/src/zmq2mqtt
+            
+      steps:    
         - uses: actions/checkout@v3
+          with:
+            path: ${{ env.GOPATH }}/src/zmq2mqtt
       
         - name: Setup libzmq
           run: sudo apt-get install libzmq3-dev
@@ -37,15 +45,28 @@ jobs:
           with:
             go-version: '1.20'
             cache-dependency-path: go.sum
+            
         - name: Pull eclipse-mosquito image that is required for tests
           run: docker pull eclipse-mosquitto
+          
+        # Install gotestfmt on the VM running the action.
+        - name: Set up gotestfmt
+          uses: gotesttools/gotestfmt-action@v2
+          with:
+            # Optional: pass GITHUB_TOKEN to avoid rate limiting.
+            token: ${{ secrets.GITHUB_TOKEN }}
         
         - name: Test 
-          run: go test -json > TestResults-ZMQ2MQTT.json
+          run: |
+            set -euo pipefail
+            go test -json -v ./... 2>&1 | tee /tmp/zmq2mqtttest.log | gotestfmt
         
-        - name: Upload Go test results
-          uses: actions/upload-artifact@v3
+        # Upload the original go test log as an artifact for later review.
+        - name: Upload test log
+          uses: actions/upload-artifact@v2
+          if: always()
           with:
-            name: TestResults-ZMQ2MQTT
-            path: TestResults-ZMQ2MQTT.json      
+            name: zmq2mqtttest-log
+            path: /tmp/zmq2mqtttest.log
+            if-no-files-found: error    
     
