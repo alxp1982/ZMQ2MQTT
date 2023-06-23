@@ -8,8 +8,8 @@ ZMQ2MQTT service is based on ZeroMQ [XSub-XPub pattern](https://netmq.readthedoc
 In a nutshell, it acts as a transparent Pub\Sub proxy with messages being also forwarder to MQTT. 
 
 The service provider 2 ZMQ endpoints:
-    - Frontend (Sub) - this is where publishers can connect to 
-    - Backend (Pub) - this is where subscribers can connect to
+- Frontend (Sub): this is where publishers can connect to 
+- Backend (Pub): this is where subscribers can connect to
 
 ![Architecture](assets/ZMQ2MQTT.png)
 
