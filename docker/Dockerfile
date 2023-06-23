@@ -23,7 +23,8 @@ RUN GOOS=linux go build -o /zmq2mqtt
 # But we can document in the Dockerfile what ports
 # the application is going to listen on by default.
 # https://docs.docker.com/engine/reference/builder/#expose
-EXPOSE 1883
+EXPOSE 5556
+EXPOSE 5559
 
 # Run
 CMD ["/zmq2mqtt"]
