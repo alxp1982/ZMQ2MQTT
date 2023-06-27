@@ -26,8 +26,15 @@ For PRs, coverage statistic also appears in PR comments.
 
 ## Deployment and configuration
 There are several options to deploy the service
-    - As a compiled binary launched as a service or cron job
-    - As a docker container 
+- As a compiled binary launched as a service, cron job or running manually using `go run` command
+- As a docker container by building one with `docker build . -f docker/Dockerfile --tag zmq2mqtt` command
+    - There is also a sample docker-compose.yml assembling both zmq2mqtt bridge image as well as eclipse-mosquitto. You can use it by running `docker compose up` command
+
+zmq2mqtt service is configured by configuration file that must be placed in config folder alongside with source. One in repository contains 3 files for test (used by unittests, please do not modify), development (feel free to modify for your environment using provided one as a template, but do not commit changes to this repository) and production (use as a template for production deployment, please do not commit changes to this repository). 
+
+You can configure which config to use by setting postfix in the ENV environment variable. For example if ENV=production, config-production.json file will be used. 
+
+
 
 ## Contributing
 

@@ -15,6 +15,9 @@ RUN go mod download
 # https://docs.docker.com/engine/reference/builder/#copy
 COPY *.go ./
 
+# Copy config files
+COPY config/ ./config
+
 # Build
 RUN GOOS=linux go build -o /zmq2mqtt
 
@@ -27,4 +30,4 @@ EXPOSE 5556
 EXPOSE 5559
 
 # Run
-CMD ["/zmq2mqtt"]
+CMD ["./zmq2mqtt"]

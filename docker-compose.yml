@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  zmq2mqtt:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: zmq2mqtt
+    ports:
+      - "5556:5556"
+      - "5559:5559"
+    environment:
+      - ENV=production
+    depends_on:
+      - mqtt_brocker
+    restart: always
+  mqtt_brocker:
+    image: eclipse-mosquitto
+    container_name: mqtt_brocker
+    ports:
+      - "1883:1883"
+      - "9002:9001"
+    volumes:
+      - ./test_data/mosquitto/mosquitto.config:/mosquitto/config/mosquitto.conf
+    restart: always

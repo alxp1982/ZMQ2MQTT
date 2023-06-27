@@ -1,7 +1,7 @@
 {
     "FrontendPort":5556,
     "BackendPort":5559,
-    "MqttServer":"tcp://localhost:1883",
+    "MqttServer":"tcp://mqtt_brocker:1883",
     "MqttClientId":"assets_tracker",
 
     "MqttConfig": {
@@ -14,7 +14,7 @@
     "ForwardTopics":["testtopic"],
 
     "LoggerConfig": {
-        "level": "debug",
+        "level": "info",
         "encoding": "json",
         "outputPaths": ["stdout", "log.log"],
         "errorOutputPaths": ["stderr"],
